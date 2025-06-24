@@ -44,7 +44,7 @@ export async function POST(request: Request) {
         title: description,
         description: `Reposted from TikTok: ${description}`,
         link: link || undefined,  // Only include if provided
-        alt_text: altText || undefined,  // Only include if provided
+      alt_text: altText || undefined,  // Only include if provided
       },
       {
         headers: {
