@@ -12,6 +12,8 @@
 
 # testing
 /coverage
+/douk
+/backend/venv
 
 # next.js
 /.next/

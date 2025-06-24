@@ -5,8 +5,8 @@ import axios, { AxiosError } from 'axios';
 export async function GET(request: Request) {
   const session = await auth();
 
-  console.log("session");
-  console.log(session);
+  // console.log("session");
+  // console.log(session);
 
   if (!session?.tiktokAccessToken) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -17,7 +17,7 @@ export async function GET(request: Request) {
     const response = await axios.post(
       'https://open.tiktokapis.com/v2/video/list/?fields=id,cover_image_url,view_count,like_count,title,duration,share_url,create_time',
       {
-        
+
         // cursor: 'optional_cursor_string',
         max_count: 20,
       },
@@ -28,7 +28,7 @@ export async function GET(request: Request) {
         },
       }
     );
-    console.log("response", response.data);
+    // console.log("response", response.data);
     return NextResponse.json({ videos: response.data.data.videos });
   } catch (error: any) {
     console.error('Error fetching TikTok videos:', error);
@@ -39,4 +39,4 @@ export async function GET(request: Request) {
       { status: 500 }
     );
   }
-} 
+}

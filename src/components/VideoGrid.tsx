@@ -94,20 +94,21 @@ export default function VideoGrid() {
 
     setIsSubmitting(true);
     try {
+      const videoUrl = await axios.get(`/api/download?videoId=${selectedVideo.id}`);
       await axios.post('/api/pinterest/pin', {
         // videoUrl: selectedVideo.video_url,
-        videoUrl: selectedVideo.cover_image_url,
+        videoUrl: videoUrl,
         ...data,
         tiktokVideoId: selectedVideo.id,
       });
-      
+
       // Update the video's posted status
-      setVideos(videos.map(video => 
-        video.id === selectedVideo.id 
+      setVideos(videos.map(video =>
+        video.id === selectedVideo.id
           ? { ...video, posted_on_pinterest: true }
           : video
       ));
-      
+
       setIsModalOpen(false);
       setSelectedVideo(null);
     } catch (err) {
@@ -155,7 +156,7 @@ export default function VideoGrid() {
                 alt={video.title}
                 className="absolute inset-0 h-full w-full object-cover"
               />
-              
+
               {/* Video overlay with stats */}
               <div className="absolute inset-0   bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-200 z-10">
                 <div className="absolute bottom-0 left-0 right-0 p-3 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200">
@@ -223,4 +224,4 @@ export default function VideoGrid() {
       />
     </>
   );
-} 
+}
