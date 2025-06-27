@@ -4,8 +4,8 @@ import axios from 'axios';
 
 export async function GET(request: Request) {
   const session = await auth();
-  console.log("boards session access token:")
-  console.log(session?.pinterestAccessToken)
+  // console.log("boards session access token:")
+  // console.log(session?.pinterestAccessToken)
 
   // Ensure user is authenticated and has a Pinterest access token
   if (!session?.pinterestAccessToken || !session?.isPinterestLinked) {

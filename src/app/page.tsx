@@ -1,40 +1,23 @@
-'use client';
+import Link from 'next/link';
 
-import VideoGrid from "@/components/VideoGrid";
-import LoginButton from "@/components/LoginButton";
-import { signOut } from "next-auth/react";
-import { useSession } from 'next-auth/react';
-import { redirect } from "next/navigation";
-
-export default function Home() {
-  // useSession handles loading and session state
-  const { data: session, status } = useSession();
-
-  // Show a loading state while session is being fetched
-  if (status === 'loading') {
-    return <main className="min-h-screen flex justify-center items-center">Loading...</main>;
-  }
-
-  // Redirect to sign-in if not authenticated
-  if (status === 'unauthenticated') {
-    // Redirect to sign-in page, which will only show TikTok option now
-    redirect("/auth/signin"); 
-  }
-
-  // Render the videos page if authenticated
+export default function LandingPage() {
   return (
-    <main className="min-h-screen p-8">
-      <div className="max-w-7xl mx-auto">
-        <h1 className="text-4xl font-bold mb-8">Welcome Back {session?.user?.name}!</h1>
-        <VideoGrid />
-        {/* <div className="mt-8">
-          <button
-            onClick={() => signOut({ callbackUrl: "/" })}
-            className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-          >
-            Logout
-          </button>
-        </div> */}
+    <main className="min-h-screen flex flex-col items-center justify-center p-8 bg-gradient-to-b from-gray-50 to-gray-100">
+      <div className="max-w-3xl mx-auto text-center">
+        <div className="flex justify-center mb-6">
+          <img src="/v4.png" alt="TikTok Shop Pinner Logo" className="h-16 w-16" />
+        </div>
+        <h1 className="text-5xl font-bold mb-6">TikTok Shop Pinner</h1>
+        <p className="text-xl text-gray-600 mb-8">
+          Easily repost your TikTok videos to Pinterest with just a few clicks.
+          Expand your reach and drive more traffic to your content.
+        </p>
+        <Link
+          href="/auth/signin"
+          className="px-8 py-4 bg-blue-600 text-white text-lg font-medium rounded-lg hover:bg-blue-700 transition-colors inline-block"
+        >
+          Get Started
+        </Link>
       </div>
     </main>
   );

@@ -13,7 +13,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    console.log("about to request videos?", session.tiktokAccessToken);
+    // console.log("about to request videos?", session.tiktokAccessToken);
     const response = await axios.post(
       'https://open.tiktokapis.com/v2/video/list/?fields=id,cover_image_url,view_count,like_count,title,duration,share_url,create_time',
       {

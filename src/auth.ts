@@ -1,10 +1,11 @@
 import NextAuth from "next-auth";
-import TikTokProvider from "next-auth/providers/tiktok";
-import PinterestProvider from "next-auth/providers/pinterest";
+import TikTok from "next-auth/providers/tiktok";
+import Pinterest from "next-auth/providers/pinterest";
+import Discord from "next-auth/providers/discord";
 
 export const { auth, handlers } = NextAuth({
   providers: [
-    TikTokProvider({
+    TikTok({
       clientId: process.env.TIKTOK_CLIENT_KEY!,
       clientSecret: process.env.TIKTOK_CLIENT_SECRET!,
       authorization: {
@@ -13,7 +14,7 @@ export const { auth, handlers } = NextAuth({
         },
       },
     }),
-    PinterestProvider({
+    Pinterest({
       clientId: process.env.PINTEREST_APP_ID!,
       clientSecret: process.env.PINTEREST_APP_SECRET!,
       authorization: {
@@ -22,6 +23,15 @@ export const { auth, handlers } = NextAuth({
         },
       },
     }),
+    Discord({
+      clientId: process.env.DISCORD_CLIENT_ID!,
+      clientSecret: process.env.DISCORD_CLIENT_SECRET!,
+      authorization: {
+        params: {
+          scope: "identify email guilds",
+        },
+      },
+    })
   ],
   callbacks: {
     async jwt({ token, account }) {
@@ -38,6 +48,10 @@ export const { auth, handlers } = NextAuth({
       if (token.provider) {
         session.provider = token.provider as string;
       }
+      // Add userId to session from token
+      if (token.sub) {
+        session.userId = token.sub;
+      }
       return session;
     },
   },
@@ -45,4 +59,4 @@ export const { auth, handlers } = NextAuth({
     signIn: "/auth/signin",
     error: "/auth/error",
   },
-}); 
+});

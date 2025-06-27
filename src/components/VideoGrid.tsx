@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import axios from 'axios';
 import PinterestPostModal from './PinterestPostModal';
+import NotificationToast, { NotificationStatus } from './NotificationToast';
 
 export interface Video {
   id: string;
@@ -28,22 +30,23 @@ function formatDuration(seconds?: number): string {
   return `${minutes}:${paddedSeconds}`;
 }
 
-// Helper function to format date
-function formatDate(timestamp?: number): string {
-    if (timestamp === undefined) return '';
-    const date = new Date(timestamp * 1000); // TikTok timestamp is in seconds
-    return date.toLocaleDateString(); // Or customize format
-}
-
 export default function VideoGrid() {
   const { data: session } = useSession();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const retryAttempt = parseInt(searchParams.get('retry') || '0');
+
   const [videos, setVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [failedAttempts, setFailedAttempts] = useState(retryAttempt);
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [boards, setBoards] = useState<Array<{ id: string; name: string }>>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [notificationStatus, setNotificationStatus] = useState<NotificationStatus>(null);
+  const [notificationMessage, setNotificationMessage] = useState('');
+  const [notificationImage, setNotificationImage] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     if (session?.tiktokAccessToken) {
@@ -52,7 +55,14 @@ export default function VideoGrid() {
         fetchBoards();
       }
     }
-  }, [session]);
+  }, [session, retryAttempt]);
+
+  // Fetch posted videos and update the videos array
+  useEffect(() => {
+    if (videos.length > 0 && session) {
+      fetchPostedVideos();
+    }
+  }, []);
 
   const fetchVideos = async () => {
     try {
@@ -62,11 +72,46 @@ export default function VideoGrid() {
         },
       });
       setVideos(response.data.videos);
+      fetchPostedVideos();
+      // Reset failed attempts on success
+      setFailedAttempts(0);
     } catch (err: any) {
-      setError('Failed to fetch videos');
       console.error(err);
+
+      // If we've tried less than 3 times, retry automatically
+      if (failedAttempts < 2) {
+        const nextAttempt = failedAttempts + 1;
+        setFailedAttempts(nextAttempt);
+
+        // Create a new URL with updated retry parameter
+        const params = new URLSearchParams(searchParams.toString());
+        params.set('retry', nextAttempt.toString());
+
+        // Redirect to the same page with updated retry parameter
+        router.push(`?${params.toString()}`);
+      } else {
+        // On third attempt, show the error
+        setError('Failed to fetch videos');
+      }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchPostedVideos = async () => {
+    try {
+      const response = await axios.get('/api/pinterest/posted-videos');
+      const postedVideoIds = response.data.postedVideos;
+
+      // Update videos with posted_on_pinterest property
+      setVideos(prevVideos =>
+        prevVideos.map(video => ({
+          ...video,
+          posted_on_pinterest: postedVideoIds.includes(video.id)
+        }))
+      );
+    } catch (err: any) {
+      console.error('Failed to fetch posted videos:', err);
     }
   };
 
@@ -93,13 +138,30 @@ export default function VideoGrid() {
     if (!selectedVideo) return;
 
     setIsSubmitting(true);
+
+    // Close the modal first
+    setIsModalOpen(false);
+
+    // Show processing notification
+    setNotificationStatus('processing');
+    setNotificationMessage(data.title);
+    setNotificationImage(selectedVideo.cover_image_url);
+
     try {
+      // First check if the user has reached the daily cap
+      await axios.get('/api/pinterest/check-cap');
+
+
+
+      // If cap check passes, proceed with downloading the video
       const videoUrl = await axios.get(`/api/download?videoId=${selectedVideo.id}`);
+
+      // Create the pin
       await axios.post('/api/pinterest/pin', {
-        // videoUrl: selectedVideo.video_url,
         videoUrl: videoUrl,
         ...data,
         tiktokVideoId: selectedVideo.id,
+        cover_image_url: selectedVideo.cover_image_url
       });
 
       // Update the video's posted status
@@ -109,11 +171,20 @@ export default function VideoGrid() {
           : video
       ));
 
-      setIsModalOpen(false);
+      // Show success notification
+      setNotificationStatus('success');
+
       setSelectedVideo(null);
-    } catch (err) {
-      setError('Failed to create Pinterest pin');
-      console.error(err);
+    } catch (err: any) {
+      if(err?.status == 429){
+        setNotificationStatus('error');
+        // console.log(capCheckResponse?.data)
+        setNotificationMessage(`Daily limit reached [5], you can post again in ${err?.response?.data.hoursUntilNextDay} hours`);
+        return
+      }
+      // Show error notification
+      setNotificationStatus('error');
+      setNotificationMessage(err.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -139,14 +210,29 @@ export default function VideoGrid() {
 
   if (error) {
     return (
-      <div className="text-red-500 text-center p-4">
-        {error}
+      <div className="flex flex-col items-center justify-center min-h-[400px] p-4">
+        <div className="text-red-500 text-center mb-4">
+          {error}
+        </div>
+        <button
+          onClick={() => router.push('/')}
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+        >
+          Retry
+        </button>
       </div>
     );
   }
 
   return (
     <>
+      <NotificationToast
+        status={notificationStatus}
+        message={notificationMessage}
+        imageUrl={notificationImage}
+        onClose={() => setNotificationStatus(null)}
+      />
+
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
         {videos.map((video) => (
           <div key={video.id} className="relative group">
@@ -186,9 +272,9 @@ export default function VideoGrid() {
             <div className="mt-2">
               <button
                 onClick={() => {
-                  console.log('Selected video URL:', video.video_url);
+                  // console.log('Selected video URL:', video.video_url);
                   setSelectedVideo(video);
-                  console.log('Selected video:', video);
+                  // console.log('Selected video:', video);
                   setIsModalOpen(true);
                 }}
                 disabled={video.posted_on_pinterest || !session?.isPinterestLinked}

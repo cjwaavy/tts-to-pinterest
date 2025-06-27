@@ -1,11 +1,16 @@
 'use client';
 
-import { signIn } from "next-auth/react";
-import { useSearchParams } from "next/navigation";
+import { signIn, useSession } from "next-auth/react";
+import { redirect, useSearchParams } from "next/navigation";
 
 export default function SignIn() {
+
+  const { data: session, status } = useSession();
+  if(status === "authenticated"){
+    redirect("/pinner");
+  }
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") || "/";
+  const callbackUrl = searchParams.get("callbackUrl") || "/pinner";
   // console.log("callbackUrl: " + callbackUrl);
   const error = searchParams.get("error");
 
@@ -14,11 +19,11 @@ export default function SignIn() {
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
           <h1 className="text-4xl font-bold mb-2">Welcome Back</h1>
-          <p className="text-gray-600 mb-8">Sign in to connect your accounts</p>
-          
+          <p className="text-gray-600 mb-8"> Sign in to connect your accounts </p>
+
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg mb-6">
-              {error === "AccessDenied" 
+              {error === "AccessDenied"
                 ? "Access was denied. Please try again."
                 : "An error occurred during sign in. Please try again."}
             </div>
@@ -35,7 +40,7 @@ export default function SignIn() {
             </svg>
             Sign in with TikTok
           </button>
-          
+
           {/* Pinterest Sign-in Button - Removed from initial sign-in page */}
           {/* Users can link Pinterest from Navbar after signing in with TikTok */}
 
@@ -58,4 +63,4 @@ export default function SignIn() {
       </div>
     </main>
   );
-} 
+}

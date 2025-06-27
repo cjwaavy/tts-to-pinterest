@@ -65,7 +65,7 @@ model PostedVideo {
   pinterestPinId String?  // Optional: The ID of the created Pinterest pin
   createdAt      DateTime @default(now())
 
-  user User @relation(fields: [userId], references: [id]) // Relation to User model
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade) // Relation to User model
 
   @@unique([userId, tiktokVideoId]) // Ensure a user can only post a TikTok video once
 }

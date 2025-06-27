@@ -3,6 +3,43 @@ import { auth } from '@/auth.config';
 import axios from 'axios';
 import { prisma } from '@/lib/prisma'; // Import the prisma client
 
+async function uploadVideoFromUrl(videoUrl: string, upload_url: string, upload_parameters: any) {
+  // Step 1: Download video as buffer
+  const videoResponse = await axios.get(videoUrl, {
+    responseType: 'stream',
+  });
+
+  // Step 2: Accumulate stream into a Buffer
+  const chunks = [];
+  for await (const chunk of videoResponse.data) {
+    chunks.push(chunk);
+  }
+  const buffer = Buffer.concat(chunks);
+  // Step 2: Convert to a Blob (fixes Pinterest rejection)
+  const blob = new Blob([buffer], { type: 'video/mp4' });
+
+  const form = new FormData()
+
+  Object.entries(upload_parameters).forEach(([key, value]) => {
+    form.append(key, value as string)
+  })
+  form.append('file', blob, 'video.mp4')
+
+  const videoUploadResponse = await axios.post(upload_url,
+    form,
+    {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
+
+  if (videoUploadResponse.status !== 204) {
+    console.error('Video upload response failed', videoUploadResponse)
+    return NextResponse.json({ error: 'Failed to upload video' }, { status: 500 });
+  }
+  // console.log('✅ Upload response status:', videoUploadResponse.status);
+}
+
 export async function POST(request: Request) {
   const session = await auth();
 
@@ -12,13 +49,13 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { videoUrl, description, tiktokVideoId, link, altText } = await request.json();
-
+    const { videoUrl, cover_image_url, description, tiktokVideoId, link, altText } = await request.json();
+    // console.log("cover_image_url:", cover_image_url)
     // First, get the user's boards
     const boardsResponse = await axios.get('https://api.pinterest.com/v5/boards?', {
       headers: {
         'Authorization': `Bearer ${session.pinterestAccessToken}`,
-        'Content-Type':  'application/json'
+        'Content-Type': 'application/json'
       },
     });
 
@@ -30,57 +67,82 @@ export async function POST(request: Request) {
     }
     const boardId = boardsResponse.data.items[0].id;
 
+    //to get info to make request to post to pinterest AWS bucket
     const mediaResponse = await axios.post(`https://api-sandbox.pinterest.com/v5/media`,
       {
-        media_type : 'video'
+        media_type: 'video'
       },
       {
-        headers:{
+        headers: {
           'Authorization': `Bearer ${process.env.PINTEREST_APP_SANDBOX_KEY}`,
           'Content-Type': 'application/json',
         }
       }
     )
 
-    if(!mediaResponse.data){
+    if (!mediaResponse.data) {
       console.error('Media response is empty / failed')
       return NextResponse.json({ error: 'Failed get templates from media endpoint' }, { status: 500 });
     }
 
     // console.log("Media response: ", mediaResponse.data)
 
-    const { media_id, upload_url, upload_parameters} = mediaResponse.data
+    const { media_id, upload_url, upload_parameters } = mediaResponse.data
 
-    console.log("Media id: ", media_id)
+    // console.log("Media id: ", media_id)
 
-    const videoUploadResponse = await axios.post(upload_url, {
-      ...upload_parameters,
-      file: `${videoUrl}`
-    },
-  {
-    headers:{
-      'Content-Type': 'multipart/form-data'
-    }
-  })
+    // console.log("videoUrl: ", videoUrl.data)
 
-    if(videoUploadResponse.status !== 204){
-      console.error('Video upload response failed', videoUploadResponse)
-      return NextResponse.json({ error: 'Failed to upload video' }, { status: 500 });
-    }
+    // const videoStream = await axios.get(videoUrl.data, {
+    //   responseType: 'stream'
+    // })
 
-    console.log("Video upload response came through")
+    // const FILE_PATH = `./${tiktokVideoId}_${media_id}.mp4`;
+    // console.log("videoStream:", videoStream)
+    // console.log("type of videoStream:", typeof videoStream.data)
+    // await pipeline(videoStream.data, fs.createWriteStream(FILE_PATH));
 
-    const TIMEOUT = 30000;
+    // console.log('✅ Download complete:', FILE_PATH);
+
+
+
+
+    // let curl = `curl --location --request POST '${upload_url}'`;
+
+    // Object.entries(upload_parameters).forEach(([key, val]) => {
+    //   curl += ` \\\n  --form '${key}=${val}'`;
+    // });
+
+    // curl += ` \\\n  --form 'file=@${FILE_PATH}'`;
+
+    // console.log('\n🧨 CURL COMMAND:\n');
+    // console.log(curl);
+    // const outputFile = `./curl_${tiktokVideoId}_${media_id}.txt`;
+    // fs.writeFileSync(outputFile, curl);
+    // console.log(`\n✅ Saved to ${outputFile}`);
+
+    // let formData: any = [];
+    // Object.entries(upload_parameters).forEach(([key, val]) => {
+    //   formData.push({name: key, contents: val})
+    // });
+
+    uploadVideoFromUrl(videoUrl.data, upload_url, upload_parameters)
+
+    // console.log("Video upload response came through")
+
+    const TIMEOUT = 600000;
     const startTime = Date.now();
 
-    while(true){
-      if(Date.now() - startTime > TIMEOUT){
-        console.log("Video Upload Status Check Timed Out")
-        return NextResponse.json({error: 'Video Upload Status Check Timed Out'}, {status: 504})
+
+
+    while (true) {
+      if (Date.now() - startTime > TIMEOUT) {
+        // console.log("Video Upload Status Check Timed Out")
+        return NextResponse.json({ error: 'Video Upload Status Check Timed Out' }, { status: 504 })
       }
       const videoUploadStatusResponse = await axios.get(`https://api-sandbox.pinterest.com/v5/media/${media_id}?`,
         {
-          headers:{
+          headers: {
             'Authorization': `Bearer ${process.env.PINTEREST_APP_SANDBOX_KEY}`,
             'Content-Type': 'application/json',
             'Accept': 'application/json'
@@ -88,20 +150,21 @@ export async function POST(request: Request) {
         }
       )
 
-      if(!videoUploadStatusResponse.data){
+      if (!videoUploadStatusResponse.data) {
         console.error('Video upload status response is empty / failed')
         return NextResponse.json({ error: 'Failed to get video upload status' }, { status: 500 });
       }
       const { status } = videoUploadStatusResponse.data
-      console.log(status)
-      if(status === "succeded"){
-        console.log("UPLOAD SUCCEEDED")
+      // console.log(status)
+      // console.log(videoUploadStatusResponse.data)
+      if (status === "succeeded") {
+        // console.log("UPLOAD SUCCEEDED")
         break;
       }
       await new Promise(resolve => setTimeout(resolve, 1000));
     }
 
-    console.log('Attempting to create pin with videoUrl:', videoUrl);
+    // console.log('Attempting to create pin with videoUrl:', videoUrl);
 
 
 
@@ -113,11 +176,12 @@ export async function POST(request: Request) {
         media_source: {
           source_type: 'video_id',
           media_id: media_id,
+          cover_image_url: cover_image_url,
         },
         title: description,
         description: `Reposted from TikTok: ${description}`,
         link: link || undefined,  // Only include if provided
-      alt_text: altText || undefined,  // Only include if provided
+        alt_text: altText || undefined,  // Only include if provided
       },
       {
         headers: {
@@ -156,9 +220,13 @@ export async function POST(request: Request) {
     console.error('Heres The response for that error:', error.response)
 
     // Consider more specific error handling for Pinterest API errors vs database errors
-
+    if(error.status == 429){
+      return NextResponse.json(
+        { error: 'Reached Max of 5 videos today' },
+        { status: 429 }
+      );
+    }
     return NextResponse.json(
-
       { error: 'Failed to create Pinterest pin' },
       { status: 500 }
     );

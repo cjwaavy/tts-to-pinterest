@@ -58,7 +58,7 @@ export default function PinterestPostModal({
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
-          <div className="fixed inset-0 bg-gray-500 bg-opacity-75 backdrop-blur-sm transition-opacity" />
+          <div className="fixed inset-0 bg-gray-500/75 backdrop-blur-sm transition-opacity" />
         </Transition.Child>
 
         <div className="fixed inset-0 overflow-hidden">
@@ -215,4 +215,4 @@ export default function PinterestPostModal({
       </Dialog>
     </Transition.Root>
   );
-} 
+}

@@ -17,12 +17,13 @@ export async function GET(request: NextRequest) {
       {
         headers: {
           'accept': 'application/json',
-          'Authorization': `Bearer ${process.env.TIKHUB_API_KEY}`
+          'Authorization': `Bearer 7bhvW0EomCMCoAkE4DmQuEkU1kAG04XS7sFM7jn96EwS608WfP5d1APtLg==`
         }
       }
     );
 
     // Return the response data
+    // console.log("DOWNLOAD RESPONSE:", response.data.data)
     return NextResponse.json(response.data.data.aweme_details[0].video.download_no_watermark_addr.url_list[0]);
   } catch (error) {
     console.error('Error fetching video:', error);
