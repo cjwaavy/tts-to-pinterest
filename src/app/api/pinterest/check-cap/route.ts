@@ -2,9 +2,9 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/auth.config';
 import { prisma } from '@/lib/prisma';
 
-export const DAILY_CAP = 5;
 
 export async function GET() {
+  const DAILY_CAP = 5;
   const session = await auth();
 
   // Ensure user is authenticated

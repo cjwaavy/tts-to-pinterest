@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { CheckIcon, LinkIcon } from '@heroicons/react/24/solid';
 import { useState } from 'react';
 import axios from 'axios';
+import Image from 'next/image';
 
 export default function Navbar() {
   const { data: session, status, update } = useSession();
@@ -47,7 +48,7 @@ export default function Navbar() {
     <nav className="bg-gray-100 text-gray-800 p-4 shadow-sm">
       <div className="container mx-auto flex justify-between items-center">
         <Link href="/" className={`text-xl font-bold flex items-center ${isSignInPage ? 'mx-auto' : ''}`}>
-          <img src="/v4.png" alt="App Logo" className="h-8 w-8 mr-2" />
+          <img src="/fullsize.png" alt="App Logo" className="h-8 w-8 mr-2" />
           TikTok Shop Pinner
         </Link>
         {!isSignInPage && (

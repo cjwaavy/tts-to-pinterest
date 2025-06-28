@@ -1,12 +1,14 @@
 'use client';
 
+import Image from "next/image";
+
 export default function DiscordServerJoinPrompt() {
   return (
     <div className="min-h-[70vh] flex flex-col items-center justify-center p-8 bg-gray-50">
       <div className="max-w-md w-full bg-white p-8 rounded-lg shadow-md text-center">
         <div className="mb-6">
 
-        <img src='./server-icon.png' className="w-16 h-16 mx-auto" />
+        <img src='./server-icon.png' alt="server-icon" className="w-16 h-16 mx-auto" />
 
         </div>
 

@@ -3,6 +3,7 @@
 import { Fragment, useEffect } from 'react';
 import { Transition } from '@headlessui/react';
 import { CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline';
+import Image from 'next/image';
 
 export type NotificationStatus = 'processing' | 'success' | 'error' | null;
 

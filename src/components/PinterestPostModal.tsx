@@ -4,6 +4,7 @@ import { Fragment, useState } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import type { Video } from './VideoGrid';
+import Image from 'next/image';
 
 interface PinterestPostModalProps {
   isOpen: boolean;

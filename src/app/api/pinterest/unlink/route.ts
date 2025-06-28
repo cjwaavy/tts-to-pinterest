@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
-import { auth, authOptions } from '@/auth.config';
+import { auth } from '@/auth.config';
 import { prisma } from '@/lib/prisma';
-import { Prisma } from '@/generated/prisma';
 
 export async function POST(request: Request) {
   const session = await auth()
@@ -17,7 +16,7 @@ export async function POST(request: Request) {
     // (Optionally, you can also delete any other Pinterest details (e.g. board info) if needed.)
     const pinterestAccount = await prisma.account.findFirst({where: {userId: userId, provider: 'pinterest'}})
     // console.log("pinterestAccount:", pinterestAccount)
-    const deletePinterestAccount = await prisma.account.delete({where: {id: pinterestAccount?.id}})
+    await prisma.account.delete({where: {id: pinterestAccount?.id}})
     // console.log('object deleted:', deletePinterestAccount)
     // const updateUser = await prisma.user.update({
     //   where: { id: userId },
