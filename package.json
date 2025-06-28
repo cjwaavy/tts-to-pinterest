@@ -17,7 +17,6 @@
     "discord-api-types": "^0.38.13",
     "next": "15.3.2",
     "next-auth": "^5.0.0-beta.28",
-    "node-libcurl": "^4.1.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
