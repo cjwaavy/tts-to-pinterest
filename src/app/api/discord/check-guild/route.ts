@@ -17,7 +17,6 @@ export async function GET() {
       isInGuild: false
     }, { status: 401 });
   }
-
   try {
     // Get the user's guilds from Discord API
     const response = await axios.get('https://discord.com/api/v10/users/@me/guilds', {

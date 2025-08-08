@@ -49,7 +49,7 @@ export default function Navbar() {
       <div className="container mx-auto flex justify-between items-center">
         <Link href="/" className={`text-xl font-bold flex items-center ${isSignInPage ? 'mx-auto' : ''}`}>
           <img src="/fullsize.png" alt="App Logo" className="h-8 w-8 mr-2" />
-          TikTok Shop Pinner
+          {pathname === '/home' ? "Winner's Circle | Official TikTok Shop Partner" : 'TikTok Shop Pinner'}
         </Link>
         {!isSignInPage && (
           <div className="flex items-center space-x-4">

@@ -10,8 +10,8 @@ export default function Footer() {
         <div className="flex flex-col md:flex-row justify-between items-center">
           {/* Logo and app name */}
           <div className="flex items-center mb-4 md:mb-0">
-            <img src="/fullsize.png" alt="App Logo" className="h-6 w-6 mr-2" />
-            <span className="text-lg font-semibold">TikTok Shop Pinner</span>
+            <img src="/WC+TIkTK(Small).png" alt="App Logo" className="w-50 mr-2" />
+            {/* <span className="text-lg font-semibold">TikTok Shop Pinner</span> */}
           </div>
 
           {/* Links */}
